@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 python run_common_voice.py \
     --model_name_or_path="facebook/wav2vec2-large-xlsr-53" \
-    --dataset_config_name="id" \
-    --output_dir=/workspace/output_models/wav2vec2-large-xlsr-indonesian \
-    --cache_dir=/workspace/output_models \
+    --dataset_config_name="br" \
+    --output_dir=/root/Work/output_models/wav2vec2-large-xlsr-breton \
     --overwrite_output_dir \
     --num_train_epochs="60" \
     --per_device_eval_batch_size="8" \
@@ -27,5 +26,4 @@ python run_common_voice.py \
     --gradient_checkpointing \
     --do_train --do_eval \
     --gradient_accumulation_steps="2" \
-    --cache_dir=/workspace/data \
     --dataloader_num_workers="8"
