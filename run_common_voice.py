@@ -300,7 +300,7 @@ def main():
     # We now keep distinct sets of args, for a cleaner separation of concerns.
     
     os.environ["WANDB_ENTITY"] = "cahya"
-    os.environ["WANDB_PROJECT"] = "xlsr-breton"
+    os.environ["WANDB_PROJECT"] = "xlsr-bask"
     os.environ["WANDB_LOG_MODEL"] = "true"
     
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
