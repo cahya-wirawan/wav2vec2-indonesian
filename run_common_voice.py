@@ -135,7 +135,8 @@ class DataTrainingArguments:
         },
     )
     chars_to_ignore: List[str] = list_field(
-        default=[",", "?", ".", "!", "-", ";", ":", '""', "%", "'", '"', "�", "(", ")", "/", "«", "»", "½", "…"],
+        default=[",", "?", ".", "!", "-", ";", ":", '""', "%", "'", '"', "�",
+                 "￼", "…", "’", "ː", "'", "‹", "›", "`", "´", "®", "—", "→"],
         metadata={"help": "A list of characters to remove from the transcripts."},
     )
 
@@ -358,9 +359,6 @@ def main():
 
     def remove_special_characters(batch):
         batch["text"] = re.sub(chars_to_ignore_regex, "", batch["sentence"]).lower() + " "
-        batch["sentence"] = re.sub("ʼ", "'", batch["sentence"])
-        batch["sentence"] = re.sub("’", "'", batch["sentence"])
-        batch["sentence"] = re.sub('‘', "'", batch["sentence"])
         return batch
 
     train_dataset = train_dataset.map(remove_special_characters, remove_columns=["sentence"])
@@ -433,12 +431,12 @@ def main():
     if data_args.max_val_samples is not None:
         eval_dataset = eval_dataset.select(range(data_args.max_val_samples))
 
-    resampler = torchaudio.transforms.Resample(48_000, 16_000)
 
     # Preprocessing the datasets.
     # We need to read the aduio files as arrays and tokenize the targets.
     def speech_file_to_array_fn(batch):
         speech_array, sampling_rate = torchaudio.load(batch["path"])
+        resampler = torchaudio.transforms.Resample(sampling_rate, 16_000)
         batch["speech"] = resampler(speech_array).squeeze().numpy()
         batch["sampling_rate"] = 16_000
         batch["target_text"] = batch["text"]

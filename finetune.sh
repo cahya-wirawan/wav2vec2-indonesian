@@ -4,7 +4,7 @@ python run_common_voice.py \
     --dataset_config_name="eu" \
     --output_dir=/root/Work/output_models/wav2vec2-large-xlsr-bask\
     --overwrite_output_dir \
-    --num_train_epochs="60" \
+    --num_train_epochs="50" \
     --per_device_eval_batch_size="8" \
     --per_device_train_batch_size="16" \
     --evaluation_strategy="steps" \
