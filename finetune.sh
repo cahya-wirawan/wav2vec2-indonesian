@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 python run_common_voice.py \
-    --model_name_or_path="facebook/wav2vec2-large-xlsr-53" \
-    --dataset_config_name="eu" \
-    --output_dir=/root/Work/output_models/wav2vec2-large-xlsr-bask\
+    --model_name_or_path="/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-articial-CV/cp-10800" \
+    --dataset_config_name="id" \
+    --output_dir=/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-articial-CV \
     --overwrite_output_dir \
-    --num_train_epochs="50" \
+    --num_train_epochs="30" \
     --per_device_eval_batch_size="8" \
     --per_device_train_batch_size="16" \
     --evaluation_strategy="steps" \

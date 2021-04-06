@@ -135,8 +135,7 @@ class DataTrainingArguments:
         },
     )
     chars_to_ignore: List[str] = list_field(
-        default=[",", "?", ".", "!", "-", ";", ":", '""', "%", "'", '"', "�",
-                 "￼", "…", "’", "ː", "'", "‹", "›", "`", "´", "®", "—", "→"],
+        default=[",", "?", ".", "!", "-", ";", ":", '""', "%", "'", '"', "�", "'", ],
         metadata={"help": "A list of characters to remove from the transcripts."},
     )
 
@@ -301,7 +300,7 @@ def main():
     # We now keep distinct sets of args, for a cleaner separation of concerns.
     
     os.environ["WANDB_ENTITY"] = "cahya"
-    os.environ["WANDB_PROJECT"] = "xlsr-bask"
+    os.environ["WANDB_PROJECT"] = "xlsr-indonesian"
     os.environ["WANDB_LOG_MODEL"] = "true"
     
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
@@ -359,6 +358,9 @@ def main():
 
     def remove_special_characters(batch):
         batch["text"] = re.sub(chars_to_ignore_regex, "", batch["sentence"]).lower() + " "
+        batch["text"] = batch["text"].replace('！ ', '')
+        batch["text"] = batch["text"].replace('，', '')
+        batch["text"] = batch["text"].replace('é', 'e')
         return batch
 
     train_dataset = train_dataset.map(remove_special_characters, remove_columns=["sentence"])
