@@ -381,7 +381,9 @@ def main():
 
     data_dir = Path("/dataset/ASR/id-Wavenet")
     file_index_path = Path("/dataset/ASR/validated_notest.tsv")
-    train_dataset, eval_dataset = load_artificial_data(file_index_path, data_dir, test_size=0.1)
+    ds = load_artificial_data(file_index_path, data_dir, test_size=0.1)
+    train_dataset = ds["train"]
+    eval_dataset = ds["test"]
 
     # Create and save tokenizer
     chars_to_ignore_regex = f'[{"".join(data_args.chars_to_ignore)}]'
