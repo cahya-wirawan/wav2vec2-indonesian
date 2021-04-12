@@ -297,8 +297,9 @@ class FlatTrainer(Trainer):
         self.create_flat_scheduler(num_training_steps)
 
 
-def load_artificial_data(file_index_path, data_dir, test_size=0.1):
+def load_artificial_data(file_index_path, data_dir, test_size=0.1, seed=1):
     """
+    Load artificial data.
     """
     df_validated_notest = pd.read_csv(file_index_path, sep='\t', header=0)
     voice_dirs = []
@@ -314,7 +315,7 @@ def load_artificial_data(file_index_path, data_dir, test_size=0.1):
     dataset_artificial = datasets.Dataset.from_dict(voices)
     dataset_artificial.save_to_disk("train_dataset")
     dataset_artificial = datasets.load_from_disk("train_dataset")
-    return dataset_artificial.train_test_split(test_size=test_size)
+    return dataset_artificial.train_test_split(test_size=test_size, seed=seed)
 
 
 def main():
@@ -381,7 +382,7 @@ def main():
 
     data_dir = Path("/dataset/ASR/id-Wavenet")
     file_index_path = Path("/dataset/ASR/validated_notest.tsv")
-    ds = load_artificial_data(file_index_path, data_dir, test_size=0.1)
+    ds = load_artificial_data(file_index_path, data_dir, test_size=0.05)
     train_dataset = ds["train"]
     eval_dataset = ds["test"]
 
