@@ -4,7 +4,7 @@ python run_common_voice.py \
     --dataset_config_name="id" \
     --output_dir=/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-articial-CV \
     --overwrite_output_dir \
-    --num_train_epochs="30" \
+    --num_train_epochs="60" \
     --per_device_eval_batch_size="8" \
     --per_device_train_batch_size="16" \
     --evaluation_strategy="steps" \
