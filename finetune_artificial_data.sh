@@ -2,7 +2,7 @@
 python run_common_voice_artificial_data.py \
     --model_name_or_path="facebook/wav2vec2-large-xlsr-53" \
     --dataset_config_name="id" \
-    --output_dir=/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-articial \
+    --output_dir=/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-artificial \
     --overwrite_output_dir \
     --num_train_epochs="30" \
     --per_device_eval_batch_size="8" \
