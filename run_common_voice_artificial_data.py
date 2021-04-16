@@ -420,6 +420,7 @@ def main():
     )
 
     vocab_list = list(set(vocab_train["vocab"][0]) | set(vocab_test["vocab"][0]))
+    vocab_list.sort()
     vocab_dict = {v: k for k, v in enumerate(vocab_list)}
     vocab_dict["|"] = vocab_dict[" "]
     del vocab_dict[" "]

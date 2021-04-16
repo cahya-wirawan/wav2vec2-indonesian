@@ -356,7 +356,7 @@ def main():
     eval_dataset = datasets.load_dataset("common_voice", data_args.dataset_config_name, split="test", cache_dir=model_args.cache_dir)
 
     # Create and save tokenizer
-    chars_to_ignore_regex = f'[{"".join(data_args.chars_to_ignore)}]'
+    chars_to_ignore_regex = f'[{re.escape("".join(data_args.chars_to_ignore))}]'
 
     def remove_special_characters(batch):
         batch["text"] = re.sub(chars_to_ignore_regex, "", batch["sentence"]).lower() + " "
@@ -386,6 +386,7 @@ def main():
     )
 
     vocab_list = list(set(vocab_train["vocab"][0]) | set(vocab_test["vocab"][0]))
+    vocab_list.sort()
     vocab_dict = {v: k for k, v in enumerate(vocab_list)}
     vocab_dict["|"] = vocab_dict[" "]
     del vocab_dict[" "]
