@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-python -m torch.distributed.launch --nproc_per_node=8 run_common_voice_turkish.py \
+#python -m torch.distributed.launch --nproc_per_node=8 run_common_voice_turkish.py \
+python run_common_voice_turkish.py \
     --model_name_or_path="facebook/wav2vec2-large-xlsr-53" \
     --dataset_config_name="nl" \
     --output_dir=/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-turkish \
