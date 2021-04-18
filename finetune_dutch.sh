@@ -6,7 +6,7 @@ python run_common_voice_dutch.py \
     --overwrite_output_dir \
     --num_train_epochs="60" \
     --per_device_eval_batch_size="8" \
-    --per_device_train_batch_size="16" \
+    --per_device_train_batch_size="24" \
     --evaluation_strategy="steps" \
     --learning_rate="1e-4" \
     --warmup_steps="300" \
