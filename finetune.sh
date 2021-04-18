@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 python run_common_voice.py \
-    --model_name_or_path="/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-artificial/epoch30" \
+    --model_name_or_path="/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-artificial/epoch-30" \
     --dataset_config_name="id" \
     --output_dir=/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-articial-CV \
     --overwrite_output_dir \
