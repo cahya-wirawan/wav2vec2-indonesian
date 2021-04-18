@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 python run_common_voice.py \
-    --model_name_or_path="/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-articial-CV/cp-10800" \
+    --model_name_or_path="/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-artificial/epoch30" \
     --dataset_config_name="id" \
     --output_dir=/root/Work/indonesian-speech-recognition/wav2vec2-large-xlsr-indonesian-articial-CV \
     --overwrite_output_dir \
     --num_train_epochs="60" \
-    --per_device_eval_batch_size="8" \
-    --per_device_train_batch_size="16" \
+    --per_device_eval_batch_size="16" \
+    --per_device_train_batch_size="32" \
     --evaluation_strategy="steps" \
     --learning_rate="1e-4" \
     --warmup_steps="300" \
