@@ -28,5 +28,5 @@
   "gradient_accumulation_steps": 2,
   "dataloader_num_workers": 8,
   "train_split_name": "train+validation+other+invalidated",
-  "chars_to_ignore": [",", "?", "¿", ".", "!", "¡", ";", ":", "\"\"", "%", "\"", "�", "”", "'", "‘", "`", "…", "’", "»", "«"]
+  "chars_to_ignore": [",", "?", "¿", ".", "!", "¡", ";", ":", "\"\"", "%", "\"", "�", "”", "'", "‘", "`", "…", "’", "»", "«", "“"]
 }
