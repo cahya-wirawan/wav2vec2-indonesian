@@ -4,6 +4,8 @@ import logging
 import os
 import re
 import sys
+import pandas as pd
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
@@ -29,10 +31,8 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
-
 if is_apex_available():
     from apex import amp
-
 
 if version.parse(torch.__version__) >= version.parse("1.6"):
     _is_native_amp_available = True
@@ -81,8 +81,8 @@ class ModelArguments:
         default=0.05,
         metadata={
             "help": "Propability of each feature vector along the time axis to be chosen as the start of the vector"
-            "span to be masked. Approximately ``mask_time_prob * sequence_length // mask_time_length`` feature"
-            "vectors will be masked along the time axis. This is only relevant if ``apply_spec_augment is True``."
+                    "span to be masked. Approximately ``mask_time_prob * sequence_length // mask_time_length`` feature"
+                    "vectors will be masked along the time axis. This is only relevant if ``apply_spec_augment is True``."
         },
     )
     gradient_checkpointing: Optional[bool] = field(
@@ -113,12 +113,6 @@ class DataTrainingArguments:
             "help": "The name of the training data set split to use (via the datasets library). Defaults to 'train'"
         },
     )
-    train_split_name_vocab: Optional[str] = field(
-        default="train+validation",
-        metadata={
-            "help": "The name of the training data set split to use (via the datasets library). Defaults to 'train'"
-        },
-    )
     overwrite_cache: bool = field(
         default=False, metadata={"help": "Overwrite the cached preprocessed datasets or not."}
     )
@@ -130,20 +124,21 @@ class DataTrainingArguments:
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of training examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     max_val_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of validation examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     chars_to_ignore: List[str] = list_field(
-      default=[",", "?", ".", "!", "-", ";", ":", '""', "%", "'", '"', "�", "'"],
+        default=[",", "?", ".", "!", "-", ";", ":", '""', "%", "'", '"', "�", "'", ],
         metadata={"help": "A list of characters to remove from the transcripts."},
     )
+
 
 @dataclass
 class DataCollatorCTCWithPadding:
@@ -244,7 +239,7 @@ class CTCTrainer(Trainer):
                 loss = loss.sum() / (inputs["labels"] >= 0).sum()
             else:
                 raise ValueError(f"{model.config.ctc_loss_reduction} is not valid. Choose one of ['mean', 'sum']")
-            
+
         if self.args.gradient_accumulation_steps > 1:
             loss = loss / self.args.gradient_accumulation_steps
 
@@ -263,48 +258,71 @@ class CTCTrainer(Trainer):
 
 def get_flat_linear_schedule_with_warmup(optimizer, num_warmup_steps,
                                          num_training_steps, last_epoch=-1):
-
     def lr_lambda(current_step):
         constant_steps = int(num_training_steps * 0.4)
         warmup_steps = int(num_training_steps * 0.1)
         if current_step < warmup_steps:
             return float(current_step) / float(max(1, warmup_steps))
-        elif current_step < warmup_steps+constant_steps:
+        elif current_step < warmup_steps + constant_steps:
             return 1
-        else: return max(
-            0.0, float(num_training_steps - current_step) / float(max(1, num_training_steps - (warmup_steps+constant_steps)))
-        )
+        else:
+            return max(
+                0.0, float(num_training_steps - current_step) / float(
+                    max(1, num_training_steps - (warmup_steps + constant_steps)))
+            )
 
     return LambdaLR(optimizer, lr_lambda, last_epoch)
 
+
 def get_flat_scheduler(
-    name=None,
-    optimizer=None,
-    num_warmup_steps=None,
-    num_training_steps=None,
+        name=None,
+        optimizer=None,
+        num_warmup_steps=None,
+        num_training_steps=None,
 ):
-    return get_flat_linear_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps, 
+    return get_flat_linear_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps,
                                                 num_training_steps=num_training_steps)
 
 
 class FlatTrainer(Trainer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-     
+
     def create_flat_scheduler(self, num_training_steps: int):
-        self.lr_scheduler = get_flat_scheduler(optimizer = self.optimizer,
-                                              num_training_steps=num_training_steps)
-    
+        self.lr_scheduler = get_flat_scheduler(optimizer=self.optimizer,
+                                               num_training_steps=num_training_steps)
+
     def create_optimizer_and_scheduler(self, num_training_steps):
         self.create_optimizer()
         self.create_flat_scheduler(num_training_steps)
+
+
+def load_artificial_data(file_index_path, data_dir, test_size=0.1, seed=1):
+    """
+    Load artificial data.
+    """
+    df_validated_notest = pd.read_csv(file_index_path, sep='\t', header=0)
+    voice_dirs = []
+    for path in data_dir.iterdir():
+        if path.is_dir():
+            print(path)
+            voice_dirs.append(path)
+    voices = {"path": [], "sentence": []}
+    for dir in voice_dirs:
+        for i, row in df_validated_notest.iterrows():
+            voices["path"].append(str(dir / row["path"]))
+            voices["sentence"].append(row["sentence"])
+    dataset_artificial = datasets.Dataset.from_dict(voices)
+    dataset_artificial.save_to_disk("train_dataset")
+    dataset_artificial = datasets.load_from_disk("train_dataset")
+    return dataset_artificial.train_test_split(test_size=test_size, seed=seed)
 
 
 def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
-    
+
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script and it's the path to a json file,
@@ -350,16 +368,22 @@ def main():
     set_seed(training_args.seed)
 
     # Get the datasets:
-    vocab_dataset = datasets.load_dataset(
-        "common_voice", data_args.dataset_config_name, split=data_args.train_split_name_vocab, cache_dir=model_args.cache_dir
-    )
+    """
     train_dataset = datasets.load_dataset(
         "common_voice", data_args.dataset_config_name, split=data_args.train_split_name, cache_dir=model_args.cache_dir
     )
-    eval_dataset = datasets.load_dataset("common_voice", data_args.dataset_config_name, split="test", cache_dir=model_args.cache_dir)
+    eval_dataset = datasets.load_dataset("common_voice", data_args.dataset_config_name, split="test",
+                                         cache_dir=model_args.cache_dir)
+    """
+
+    data_dir = Path("/dataset/ASR/id-Wavenet")
+    file_index_path = Path("/dataset/ASR/validated_notest.tsv")
+    ds = load_artificial_data(file_index_path, data_dir, test_size=0.05)
+    train_dataset = ds["train"]
+    eval_dataset = ds["test"]
 
     # Create and save tokenizer
-    chars_to_ignore_regex = f'[{re.escape("".join(data_args.chars_to_ignore))}]'
+    chars_to_ignore_regex = f'[{"".join(data_args.chars_to_ignore)}]'
 
     def remove_special_characters(batch):
         batch["text"] = re.sub(chars_to_ignore_regex, "", batch["sentence"]).lower() + " "
@@ -368,7 +392,6 @@ def main():
         batch["text"] = batch["text"].replace('é', 'e')
         return batch
 
-    vocab_dataset = vocab_dataset.map(remove_special_characters, remove_columns=["sentence"])
     train_dataset = train_dataset.map(remove_special_characters, remove_columns=["sentence"])
     eval_dataset = eval_dataset.map(remove_special_characters, remove_columns=["sentence"])
 
@@ -377,14 +400,14 @@ def main():
         vocab = list(set(all_text))
         return {"vocab": [vocab], "all_text": [all_text]}
 
-    vocab_train = vocab_dataset.map(
+    vocab_train = train_dataset.map(
         extract_all_chars,
         batched=True,
         batch_size=-1,
         keep_in_memory=True,
-        remove_columns=vocab_dataset.column_names,
+        remove_columns=train_dataset.column_names,
     )
-    vocab_test = eval_dataset.map(
+    vocab_test = train_dataset.map(
         extract_all_chars,
         batched=True,
         batch_size=-1,
@@ -440,7 +463,6 @@ def main():
     if data_args.max_val_samples is not None:
         eval_dataset = eval_dataset.select(range(data_args.max_val_samples))
 
-
     # Preprocessing the datasets.
     # We need to read the aduio files as arrays and tokenize the targets.
     def speech_file_to_array_fn(batch):
@@ -465,7 +487,7 @@ def main():
     def prepare_dataset(batch):
         # check that all files have the correct sampling rate
         assert (
-            len(set(batch["sampling_rate"])) == 1
+                len(set(batch["sampling_rate"])) == 1
         ), f"Make sure all inputs have the same sampling rate of {processor.feature_extractor.sampling_rate}."
         batch["input_values"] = processor(batch["speech"], sampling_rate=batch["sampling_rate"][0]).input_values
         # Setup the processor for targets
@@ -521,7 +543,7 @@ def main():
         eval_dataset=eval_dataset if training_args.do_eval else None,
         tokenizer=processor.feature_extractor,
     )
-    
+
     # save the feature_extractor and the tokenizer
     if is_main_process(training_args.local_rank):
         processor.save_pretrained(training_args.output_dir)
