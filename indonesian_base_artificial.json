@@ -1,9 +1,9 @@
 {
-  "model_name_or_path": "/workspace/models/wav2vec2-base-indonesian-artificial",
+  "model_name_or_path": "facebook/wav2vec2-base",
   "dataset_config_name": "id",
-  "output_dir": "/workspace/output_models/wav2vec2-base-indonesian-artificial-cv",
+  "output_dir": "/workspace/output_models/wav2vec2-base-indonesian-artificial",
   "overwrite_output_dir": true,
-  "num_train_epochs": 60,
+  "num_train_epochs": 30,
   "per_device_eval_batch_size": 8,
   "per_device_train_batch_size": 32,
   "evaluation_strategy": "steps",
