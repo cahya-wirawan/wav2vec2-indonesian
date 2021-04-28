@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import json
 import logging
+import ntpath
 import os
 import re
 import sys
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
+import math
 
 import datasets
 import numpy as np
@@ -300,6 +302,38 @@ class FlatTrainer(Trainer):
         self.create_flat_scheduler(num_training_steps)
 
 
+def get_bell_schedule_with_warmup(optimizer, num_training_steps, num_warmup_pct, last_epoch=-1):
+
+    def lr_lambda(current_step):
+        alpha = 1./(num_warmup_pct*num_training_steps)
+        y = alpha * current_step * math.pow(math.e, (1-alpha*current_step))
+        return max(0.0, min(1.0, y))
+
+    return LambdaLR(optimizer, lr_lambda, last_epoch)
+
+def get_bell_scheduler(
+    name=None,
+    optimizer=None,
+    num_warmup_pct=0.1,
+    num_training_steps=None,
+):
+    return get_bell_schedule_with_warmup(optimizer,
+                                         num_training_steps=num_training_steps,
+                                         num_warmup_pct=num_warmup_pct,)
+
+class BellTrainer(Trainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def create_bell_scheduler(self, num_training_steps: int, num_warmup_pct: float):
+        self.lr_scheduler = get_bell_scheduler(optimizer=self.optimizer,
+                                               num_training_steps=num_training_steps,
+                                               num_warmup_pct=num_warmup_pct)
+
+    def create_optimizer_and_scheduler(self, num_training_steps):
+        self.create_optimizer()
+        self.create_bell_scheduler(num_training_steps, 0.1)
+
 def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
@@ -512,7 +546,7 @@ def main():
     data_collator = DataCollatorCTCWithPadding(processor=processor, padding=True)
 
     # Initialize our Trainer    
-    trainer = FlatTrainer(
+    trainer = BellTrainer(
         model=model,
         data_collator=data_collator,
         args=training_args,
