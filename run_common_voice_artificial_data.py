@@ -297,24 +297,14 @@ class FlatTrainer(Trainer):
         self.create_flat_scheduler(num_training_steps)
 
 
-def load_artificial_data(file_index_path, data_dir, test_size=0.1, seed=1):
+def load_artificial_data(data_dir, test_size=0.01, seed=1):
     """
     Load artificial data.
     """
-    df_validated_notest = pd.read_csv(file_index_path, sep='\t', header=0)
-    voice_dirs = []
-    for path in data_dir.iterdir():
-        if path.is_dir():
-            print(path)
-            voice_dirs.append(path)
-    voices = {"path": [], "sentence": []}
-    for dir in voice_dirs:
-        for i, row in df_validated_notest.iterrows():
-            voices["path"].append(str(dir / row["path"]))
-            voices["sentence"].append(row["sentence"])
-    dataset_artificial = datasets.Dataset.from_dict(voices)
-    dataset_artificial.save_to_disk("train_dataset")
-    dataset_artificial = datasets.load_from_disk("train_dataset")
+    df_transcription = pd.read_csv(data_dir/'transcription.tsv', sep='\t', header=0, quoting=3)
+    dataset_artificial = datasets.Dataset.from_pandas(df_transcription)
+    dataset_artificial.save_to_disk("transcription_dataset")
+    dataset_artificial = datasets.load_from_disk("transcription_dataset")
     return dataset_artificial.train_test_split(test_size=test_size, seed=seed)
 
 
@@ -380,7 +370,7 @@ def main():
                                          cache_dir=model_args.cache_dir)
     """
 
-    data_dir = Path("/dataset/ASR/id-Wavenet")
+    data_dir = Path("/dataset/ASR/synthetic-voice")
     file_index_path = Path("/dataset/ASR/validated_notest.tsv")
     ds = load_artificial_data(file_index_path, data_dir, test_size=0.05)
     train_dataset = ds["train"]
