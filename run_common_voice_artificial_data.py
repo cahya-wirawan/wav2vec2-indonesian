@@ -302,9 +302,11 @@ def load_artificial_data(data_dir, test_size=0.01, seed=1):
     Load artificial data.
     """
     df_transcription = pd.read_csv(data_dir/'transcription.tsv', sep='\t', header=0, quoting=3)
+    df_transcription['path'] = f'{str(data_dir)}/' + df_transcription['path']
     dataset_artificial = datasets.Dataset.from_pandas(df_transcription)
-    dataset_artificial.save_to_disk("transcription_dataset")
-    dataset_artificial = datasets.load_from_disk("transcription_dataset")
+    # Save the data
+    # dataset_artificial.save_to_disk("transcription_dataset")
+    # dataset_artificial = datasets.load_from_disk("transcription_dataset")
     return dataset_artificial.train_test_split(test_size=test_size, seed=seed)
 
 
