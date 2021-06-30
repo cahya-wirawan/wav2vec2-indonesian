@@ -297,7 +297,7 @@ class FlatTrainer(Trainer):
         self.create_flat_scheduler(num_training_steps)
 
 
-def load_artificial_data(data_dir, test_size=0.01, seed=1):
+def load_artificial_data(data_dir, test_size=0.1, seed=1):
     """
     Load artificial data.
     """
