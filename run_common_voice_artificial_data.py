@@ -107,6 +107,9 @@ class DataTrainingArguments:
     dataset_config_name: Optional[str] = field(
         default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)."}
     )
+    dataset_artificial_dir: Optional[str] = field(
+        default=None, metadata={"help": "The directory name of the artificial dataset."}
+    )
     train_split_name: Optional[str] = field(
         default="train+validation",
         metadata={
@@ -304,9 +307,6 @@ def load_artificial_data(data_dir, test_size=0.1, seed=1):
     df_transcription = pd.read_csv(data_dir/'transcription.tsv', sep='\t', header=0, quoting=3)
     df_transcription['path'] = f'{str(data_dir)}/' + df_transcription['path']
     dataset_artificial = datasets.Dataset.from_pandas(df_transcription)
-    # Save the data
-    # dataset_artificial.save_to_disk("transcription_dataset")
-    # dataset_artificial = datasets.load_from_disk("transcription_dataset")
     return dataset_artificial.train_test_split(test_size=test_size, seed=seed)
 
 
@@ -314,10 +314,6 @@ def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
-
-    os.environ["WANDB_ENTITY"] = "cahya"
-    os.environ["WANDB_PROJECT"] = "xlsr-indonesian"
-    os.environ["WANDB_LOG_MODEL"] = "true"
 
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
@@ -373,8 +369,7 @@ def main():
     """
 
     data_dir = Path("/dataset/ASR/synthetic-voice")
-    file_index_path = Path("/dataset/ASR/validated_notest.tsv")
-    ds = load_artificial_data(file_index_path, data_dir, test_size=0.05)
+    ds = load_artificial_data(data_dir, test_size=0.05)
     train_dataset = ds["train"]
     eval_dataset = ds["test"]
 
