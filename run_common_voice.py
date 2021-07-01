@@ -116,6 +116,9 @@ class DataTrainingArguments:
     local_data_seed: Optional[int] = field(
         default=1, metadata={"help": "The seed for random test split."}
     )
+    generate_vocab: bool = field(
+        default=False, metadata={"help": "Generate a new vocabulary file or load the existing one."}
+    )
     train_split_name: Optional[str] = field(
         default="train+validation",
         metadata={
@@ -388,6 +391,7 @@ def main():
         batch["text"] = batch["text"].replace('é', 'e')
         return batch
 
+
     train_dataset = train_dataset.map(remove_special_characters, remove_columns=["sentence"])
     eval_dataset = eval_dataset.map(remove_special_characters, remove_columns=["sentence"])
 
@@ -396,31 +400,44 @@ def main():
         vocab = list(set(all_text))
         return {"vocab": [vocab], "all_text": [all_text]}
 
-    vocab_train = train_dataset.map(
-        extract_all_chars,
-        batched=True,
-        batch_size=-1,
-        keep_in_memory=True,
-        remove_columns=train_dataset.column_names,
-    )
-    vocab_test = train_dataset.map(
-        extract_all_chars,
-        batched=True,
-        batch_size=-1,
-        keep_in_memory=True,
-        remove_columns=eval_dataset.column_names,
-    )
+    def generate_vocabulary(vocab_file, dataset_config_name, cache_dir):
+        vocab_train_dataset = datasets.load_dataset(
+            "common_voice", dataset_config_name, split="train+validation", cache_dir=cache_dir
+        )
+        vocab_test_dataset = datasets.load_dataset("common_voice", dataset_config_name, split="test",
+                                             cache_dir=cache_dir)
+        vocab_train_dataset = vocab_train_dataset.map(remove_special_characters, remove_columns=["sentence"])
+        vocab_test_dataset = vocab_test_dataset.map(remove_special_characters, remove_columns=["sentence"])
 
-    vocab_list = list(set(vocab_train["vocab"][0]) | set(vocab_test["vocab"][0]))
-    vocab_list.sort()
-    vocab_dict = {v: k for k, v in enumerate(vocab_list)}
-    vocab_dict["|"] = vocab_dict[" "]
-    del vocab_dict[" "]
-    vocab_dict["[UNK]"] = len(vocab_dict)
-    vocab_dict["[PAD]"] = len(vocab_dict)
+        vocab_train = vocab_train_dataset.map(
+            extract_all_chars,
+            batched=True,
+            batch_size=-1,
+            keep_in_memory=True,
+            remove_columns=vocab_train_dataset.column_names,
+        )
+        vocab_test = vocab_test_dataset.map(
+            extract_all_chars,
+            batched=True,
+            batch_size=-1,
+            keep_in_memory=True,
+            remove_columns=vocab_test_dataset.column_names,
+        )
 
-    with open("vocab.json", "w") as vocab_file:
-        json.dump(vocab_dict, vocab_file)
+        vocab_list = list(set(vocab_train["vocab"][0]) | set(vocab_test["vocab"][0]))
+        vocab_list.sort()
+        vocab_dict = {v: k for k, v in enumerate(vocab_list)}
+        vocab_dict["|"] = vocab_dict[" "]
+        del vocab_dict[" "]
+        vocab_dict["[UNK]"] = len(vocab_dict)
+        vocab_dict["[PAD]"] = len(vocab_dict)
+
+        with open(vocab_file, "w") as vf:
+            json.dump(vocab_dict, vf)
+
+    vocab_file = f'vocab_{data_args.dataset_config_name}'
+    if not os.path.exists(vocab_file) or data_args.generate_vocab:
+        generate_vocabulary(vocab_file, data_args.dataset_config_name, model_args.cache_dir)
 
     # Load pretrained model and tokenizer
     #
@@ -428,7 +445,7 @@ def main():
     # The .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     tokenizer = Wav2Vec2CTCTokenizer(
-        "vocab.json",
+        vocab_file,
         unk_token="[UNK]",
         pad_token="[PAD]",
         word_delimiter_token="|",
