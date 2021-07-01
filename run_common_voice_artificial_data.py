@@ -107,8 +107,14 @@ class DataTrainingArguments:
     dataset_config_name: Optional[str] = field(
         default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)."}
     )
-    dataset_artificial_dir: Optional[str] = field(
-        default=None, metadata={"help": "The directory name of the artificial dataset."}
+    local_data_dir: Optional[str] = field(
+        default=None, metadata={"help": "The directory name of the local dataset."}
+    )
+    local_data_test_size: Optional[float] = field(
+        default=0.1, metadata={"help": "The percentage for the test dataset."}
+    )
+    local_data_seed: Optional[int] = field(
+        default=1, metadata={"help": "The seed for random test split."}
     )
     train_split_name: Optional[str] = field(
         default="train+validation",
@@ -300,7 +306,7 @@ class FlatTrainer(Trainer):
         self.create_flat_scheduler(num_training_steps)
 
 
-def load_artificial_data(data_dir, test_size=0.1, seed=1):
+def load_local_data(data_dir, test_size=0.1, seed=1):
     """
     Load artificial data.
     """
@@ -360,18 +366,17 @@ def main():
     set_seed(training_args.seed)
 
     # Get the datasets:
-    """
-    train_dataset = datasets.load_dataset(
-        "common_voice", data_args.dataset_config_name, split=data_args.train_split_name, cache_dir=model_args.cache_dir
-    )
-    eval_dataset = datasets.load_dataset("common_voice", data_args.dataset_config_name, split="test",
-                                         cache_dir=model_args.cache_dir)
-    """
-
-    data_dir = Path("/dataset/ASR/synthetic-voice")
-    ds = load_artificial_data(data_dir, test_size=0.05)
-    train_dataset = ds["train"]
-    eval_dataset = ds["test"]
+    if data_args.local_data_dir is None:
+        train_dataset = datasets.load_dataset(
+            "common_voice", data_args.dataset_config_name, split=data_args.train_split_name, cache_dir=model_args.cache_dir
+        )
+        eval_dataset = datasets.load_dataset("common_voice", data_args.dataset_config_name, split="test",
+                                             cache_dir=model_args.cache_dir)
+    else:
+        ds = load_local_data(Path(data_args.local_data_dir), test_size=data_args.local_data_test_size,
+                                  seed=data_args.local_data_seed)
+        train_dataset = ds["train"]
+        eval_dataset = ds["test"]
 
     # Create and save tokenizer
     chars_to_ignore_regex = f'[{"".join(data_args.chars_to_ignore)}]'
