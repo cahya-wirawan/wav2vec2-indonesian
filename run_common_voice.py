@@ -435,7 +435,7 @@ def main():
         with open(vocab_file, "w") as vf:
             json.dump(vocab_dict, vf)
 
-    vocab_file = f'vocab_{data_args.dataset_config_name}'
+    vocab_file = f'vocab_{data_args.dataset_config_name}.json'
     if not os.path.exists(vocab_file) or data_args.generate_vocab:
         generate_vocabulary(vocab_file, data_args.dataset_config_name, model_args.cache_dir)
 
