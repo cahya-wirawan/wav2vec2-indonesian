@@ -2,6 +2,7 @@
   "model_name_or_path": "cahya/wav2vec2-base",
   "dataset_config_name": "id",
   "local_data_dir": "/dataset/ASR/synthetic-voice",
+  "local_data_test_size": 0.02,
   "output_dir": "/workspace/output_models/wav2vec2-base-indonesian-synthetic-voice",
   "overwrite_output_dir": true,
   "num_train_epochs": 10,
